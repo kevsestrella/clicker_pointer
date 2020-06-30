@@ -19,10 +19,6 @@ class FaceDetector:
         self.face_coordinates = None
         self.exec_network = None
 
-        self.input_name = next(iter(self.model.inputs))
-        self.input_shape = self.model.inputs[self.input_name].shape
-        self.output_name = next(iter(self.model.outputs))
-        self.output_shape = self.model.outputs[self.output_name].shape
 
     def load_model(self):
         '''
@@ -30,19 +26,24 @@ class FaceDetector:
         If your model requires any Plugins, this is where you can load them.
         '''
         self.model = IENetwork(self.model_structure, self.model_weights)
+        self.input_name = next(iter(self.model.inputs))
+        self.input_shape = self.model.inputs[self.input_name].shape
+        self.output_name = next(iter(self.model.outputs))
+        self.output_shape = self.model.outputs[self.output_name].shape
+
         self.plugin = IECore()
 
         if self.extensions and "CPU" in self.device:
             self.plugin.add_extension(self.extensions, self.device)
 
         supported_layers = self.plugin.query_network(network=self.model, device_name=self.device)
-        unsupported_layers = [l for l in self.network.layers.keys() if l not in supported_layers]
+        unsupported_layers = [l for l in self.model.layers.keys() if l not in supported_layers]
 
         if unsupported_layers:
             log.error(f"Unsupported layers found: {unsupported_layers}")
             exit(1)
 
-        self.exec_network = self.plugin.load_network(self.network, self.device)
+        self.exec_network = self.plugin.load_network(self.model, self.device)
 
     def predict(self, image):
         '''
