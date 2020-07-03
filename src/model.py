@@ -1,8 +1,22 @@
+import time
 from abc import ABC, abstractmethod
-
+import logging as log
 import cv2
 from openvino.inference_engine import IENetwork, IECore
 
+def timeit(f):
+
+    def timed(*args, **kw):
+
+        ts = time.time()
+        result = f(*args, **kw)
+        te = time.time()
+
+        logger = log.getLogger()
+        logger.info(f"{args} {f.__name__} took {te-ts}")
+        return result
+
+    return timed
 
 class Model_X(ABC):
     '''
@@ -15,6 +29,7 @@ class Model_X(ABC):
         self.threshold = threshold
         self.extensions = extensions
 
+    @timeit
     def load_model(self):
         '''
         This method is for loading the model to the device specified by the user.
@@ -40,12 +55,12 @@ class Model_X(ABC):
 
         self.exec_network = self.core.load_network(self.network, self.device)
 
-    @abstractmethod
     def predict(self, image):
         '''
         This abstractmethod is meant for running predictions on the input image.
         '''
-        pass
+        outputs = self.exec_network.infer({self.input_name: self.preprocess_input(image)})
+        return self.preprocess_output(outputs, image)
 
     def check_model(self):
         raise NotImplementedError
@@ -58,6 +73,8 @@ class Model_X(ABC):
         ret = cv2.resize(image, (self.input_shape[3], self.input_shape[2]))
         ret = ret.transpose((2, 0, 1))
         ret = ret.reshape(1, *ret.shape)
+
+        return ret
 
     @abstractmethod
     def preprocess_output(self, outputs):

@@ -14,18 +14,7 @@ class FaceDetector(Model_X):
         super().__init__(model_name, device=device, threshold=threshold, extensions=extensions)
 
 
-    def predict(self, image):
-        '''
-        This method is meant for running predictions on the input image.
-        '''
-        outputs = self.exec_network.infer({self.input_name: self.preprocess_input(image)})
-        coordinates = self.preprocess_output(outputs, image.shape)
-
-        face_image = image[coordinates[1]:coordinates[3], coordinates[0]:coordinates[2]]
-        return coordinates, face_image
-
-
-    def preprocess_output(self, outputs, image_shape):
+    def preprocess_output(self, outputs, image):
         '''
         Before feeding the output of this model to the next model,
         you might have to preprocess the output. This function is where you can do that.
@@ -34,9 +23,9 @@ class FaceDetector(Model_X):
         for box in outputs[self.output_name][0][0]:
             conf = box[2]
             if conf >= self.threshold:
-                xmin = int(box[3] * image_shape[1])
-                ymin = int(box[4] * image_shape[0])
-                xmax = int(box[5] * image_shape[1])
-                ymax = int(box[6] * image_shape[0])
+                xmin = int(box[3] * image.shape[1])
+                ymin = int(box[4] * image.shape[0])
+                xmax = int(box[5] * image.shape[1])
+                ymax = int(box[6] * image.shape[0])
                 # limited to only one face detection
-                return [xmin, ymin, xmax, ymax]
+                return [xmin, ymin, xmax, ymax], image[ymin:ymax, xmin:xmax]

@@ -1,46 +1,28 @@
-'''
-This is a sample class for a model. You may choose to use it as-is or make any changes to it.
-This has been provided just to give you an idea of how to structure your model class.
-'''
+from model import Model_X
 
-class FaceLandmarkDetector:
+class FaceLandmarkDetector(Model_X):
     '''
     Class for the Face Detection Model.
     '''
-    def __init__(self, model_name, device='CPU', extensions=None):
-        '''
-        TODO: Use this to set your instance variables.
-        '''
-        raise NotImplementedError
+    def __init__(self, model_name, device='CPU', threshold=0.5, extensions=None):
+        super().__init__(model_name, device=device, threshold=threshold, extensions=extensions)
 
-    def load_model(self):
-        '''
-        TODO: You will need to complete this method.
-        This method is for loading the model to the device specified by the user.
-        If your model requires any Plugins, this is where you can load them.
-        '''
-        raise NotImplementedError
 
-    def predict(self, image):
+    def preprocess_output(self, outputs, image):
         '''
-        TODO: You will need to complete this method.
-        This method is meant for running predictions on the input image.
+        Before feeding the output of this model to the next model,
+        you might have to preprocess the output. This function is where you can do that.
         '''
-        raise NotImplementedError
+        outputs = outputs[self.output_name][0]
 
-    def check_model(self):
-        raise NotImplementedError
+        left_eye_x = int(outputs[0] * image.shape[1])
+        left_eye_y = int(outputs[1] * image.shape[0])
+        right_eye_x = int(outputs[2] * image.shape[1])
+        right_eye_y = int(outputs[3] * image.shape[0])
 
-    def preprocess_input(self, image):
-    '''
-    Before feeding the data into the model for inference,
-    you might have to preprocess it. This function is where you can do that.
-    '''
-        raise NotImplementedError
+        left_eye = (left_eye_x - 10, left_eye_y - 10, left_eye_x + 10, left_eye_y + 10)
+        right_eye = (right_eye_x - 10, right_eye_y - 10, right_eye_x + 10, right_eye_y + 10)
 
-    def preprocess_output(self, outputs):
-    '''
-    Before feeding the output of this model to the next model,
-    you might have to preprocess the output. This function is where you can do that.
-    '''
-        raise NotImplementedError
+        return (image[left_eye[0]:left_eye[2], left_eye[1]:left_eye[3]],
+                image[right_eye[0]:right_eye[2], right_eye[1]:right_eye[3]],
+                (left_eye, right_eye))

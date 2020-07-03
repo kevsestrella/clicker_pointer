@@ -1,46 +1,43 @@
-'''
-This is a sample class for a model. You may choose to use it as-is or make any changes to it.
-This has been provided just to give you an idea of how to structure your model class.
-'''
+import math
 
-class GazeEstimator:
+import cv2
+
+from model import Model_X
+
+
+class GazeEstimator(Model_X):
     '''
     Class for the Face Detection Model.
     '''
-    def __init__(self, model_name, device='CPU', extensions=None):
-        '''
-        TODO: Use this to set your instance variables.
-        '''
-        raise NotImplementedError
+    def __init__(self, model_name, device='CPU', threshold=0.5, extensions=None):
+        super().__init__(model_name, device=device, threshold=threshold, extensions=extensions)
 
-    def load_model(self):
-        '''
-        TODO: You will need to complete this method.
-        This method is for loading the model to the device specified by the user.
-        If your model requires any Plugins, this is where you can load them.
-        '''
-        raise NotImplementedError
 
-    def predict(self, image):
+    def predict(self, left_eye_image, right_eye_image, head_pose_estimate):
         '''
-        TODO: You will need to complete this method.
         This method is meant for running predictions on the input image.
         '''
-        raise NotImplementedError
+        self.input_shape = (60,60,60,60)
+        outputs = self.exec_network.infer(
+                inputs={
+                    'left_eye_image': self.preprocess_input(left_eye_image),
+                    'right_eye_image':self.preprocess_input(right_eye_image),
+                    'head_pose_angles':head_pose_estimate})
 
-    def check_model(self):
-        raise NotImplementedError
+        return self.preprocess_output(outputs, head_pose_estimate)
 
-    def preprocess_input(self, image):
-    '''
-    Before feeding the data into the model for inference,
-    you might have to preprocess it. This function is where you can do that.
-    '''
-        raise NotImplementedError
 
-    def preprocess_output(self, outputs):
-    '''
-    Before feeding the output of this model to the next model,
-    you might have to preprocess the output. This function is where you can do that.
-    '''
-        raise NotImplementedError
+    def preprocess_output(self, outputs, head_pose_estimate):
+        '''
+        Before feeding the output of this model to the next model,
+        you might have to preprocess the output. This function is where you can do that.
+        '''
+
+        roll = head_pose_estimate[2]
+        outputs = outputs[self.output_name][0]
+        cos_theta = math.cos(roll * math.pi / 180)
+        sin_theta = math.sin(roll * math.pi / 180)
+        x = outputs[0] * cos_theta + outputs[1] * sin_theta
+        y = outputs[1] * cos_theta - outputs[0] * sin_theta
+
+        return (x,y), outputs
