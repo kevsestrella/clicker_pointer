@@ -1,8 +1,8 @@
 import time
 import logging as log
 
-def timeit(f):
 
+def timeit(f):
     def timed(*args, **kw):
 
         ts = time.time()
