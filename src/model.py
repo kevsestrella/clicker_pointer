@@ -1,22 +1,9 @@
-import time
 from abc import ABC, abstractmethod
 import logging as log
 import cv2
 from openvino.inference_engine import IENetwork, IECore
+from timer import timeit
 
-def timeit(f):
-
-    def timed(*args, **kw):
-
-        ts = time.time()
-        result = f(*args, **kw)
-        te = time.time()
-
-        logger = log.getLogger()
-        logger.info(f"{args} {f.__name__} took {te-ts}")
-        return result
-
-    return timed
 
 class Model_X(ABC):
     '''
@@ -55,6 +42,7 @@ class Model_X(ABC):
 
         self.exec_network = self.core.load_network(self.network, self.device)
 
+    @timeit
     def predict(self, image):
         '''
         This abstractmethod is meant for running predictions on the input image.
@@ -82,4 +70,5 @@ class Model_X(ABC):
         Before feeding the output of this model to the next model,
         you might have to preprocess the output. This function is where you can do that.
         '''
+
         pass

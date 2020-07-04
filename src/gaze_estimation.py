@@ -3,6 +3,7 @@ import math
 import cv2
 
 from model import Model_X
+from timer import timeit
 
 
 class GazeEstimator(Model_X):
@@ -12,7 +13,7 @@ class GazeEstimator(Model_X):
     def __init__(self, model_name, device='CPU', threshold=0.5, extensions=None):
         super().__init__(model_name, device=device, threshold=threshold, extensions=extensions)
 
-
+    @timeit
     def predict(self, left_eye_image, right_eye_image, head_pose_estimate):
         '''
         This method is meant for running predictions on the input image.
